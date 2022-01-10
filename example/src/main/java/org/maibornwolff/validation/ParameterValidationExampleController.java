@@ -27,7 +27,7 @@ public class ParameterValidationExampleController {
     }
 
     /**
-     * Validate input parameters and throw ValidationException if one parameter is not valid.
+     * Validate input parameters and log the validation result
      */
     public Collection<String> getSomeOtherData(String param1, Integer param2) {
         final Validation validation = of(
