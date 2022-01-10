@@ -41,6 +41,7 @@ At the end take the Validation and check it for errors:
     }
 ```
 
-The ValidationException contains the result of all validations and at the Controller Exception Handler 
+The ValidationException contains the result of all validations and at the Controller Exception Handler should handle the result.
+More examples are in the [ExampleController](/example/src/main/java/org/maibornwolff/validation/ParameterValidationExampleController.java)
 
 
