@@ -13,11 +13,13 @@ jobs:
       packages: write
     steps:
       - uses: actions/checkout@v2
+      - name: Set env
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/}" >> $GITHUB_ENV
       - uses: actions/setup-java@v2
         with:
           java-version: '11'
           distribution: 'adopt'
       - name: Publish package
-        run: mvn --batch-mode --no-transfer-progress deploy
+        run: mvn --batch-mode --no-transfer-progress -Drevision=$RELEASE_VERSION deploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
