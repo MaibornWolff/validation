@@ -64,8 +64,8 @@ class ValidationTest {
 
     @Test
     void toString_should_generate_readable_output() {
-        assertThat(Validation.error("A error message").toString()).isEqualTo("Validation errors:\n" +
-                "A error message");
+        assertThat(Validation.error(ERROR_MESSAGE).toString()).isEqualTo("Validation errors:\n" +
+                ERROR_MESSAGE);
     }
 
     @ParameterizedTest
@@ -79,7 +79,7 @@ class ValidationTest {
     }
 
     @Test
-    void should_validate_if_a_Collection_and_call_the_callable_with_each_sub_element() {
+    void should_validate_if_a_Collection_is_not_empty_and_call_the_callable_with_each_sub_element() {
         Function fun = Mockito.mock(Function.class);
         Mockito.when(fun.apply(any())).thenReturn(Validation.ok());
 
@@ -91,24 +91,46 @@ class ValidationTest {
     }
 
     @Test
-    void should_validate_a_null_String() {
-        final Validation validation = Validation.validateNotNullOrEmpty(null, "Specimen");
+    void should_validate_if_a_Collection_is_null() {
+        Function fun = Mockito.mock(Function.class);
+        Mockito.when(fun.apply(any())).thenReturn(Validation.ok());
+
+        final Validation validation = Validation.validateNotNull((Collection<String>) null, (Function<String, Validation>) fun, ERROR_MESSAGE);
 
         assertThat(validation.hasError()).isTrue();
-        assertThat(validation.getErrors()).hasSize(1).containsExactly("Specimen should have a value");
+    }
+
+    @Test
+    void should_validate_if_a_Collection_is_not_null_and_call_the_callable_with_each_sub_element() {
+        Function fun = Mockito.mock(Function.class);
+        Mockito.when(fun.apply(any())).thenReturn(Validation.ok());
+
+        Collection<String> col = Set.of("value 1");
+        final Validation validation = Validation.validateNotNull(col, (Function<String, Validation>) fun, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isFalse();
+        Mockito.verify(fun).apply(eq("value 1"));
+    }
+
+    @Test
+    void should_validate_a_null_String() {
+        final Validation validation = Validation.validateNotNullOrEmpty(null, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isTrue();
+        assertThat(validation.getErrors()).hasSize(1).containsExactly(ERROR_MESSAGE + " should have a value");
     }
 
     @Test
     void should_validate_an_empty_String() {
-        final Validation validation = Validation.validateNotNullOrEmpty("", "Specimen");
+        final Validation validation = Validation.validateNotNullOrEmpty("", ERROR_MESSAGE);
 
         assertThat(validation.hasError()).isTrue();
-        assertThat(validation.getErrors()).hasSize(1).containsExactly("Specimen should have a value");
+        assertThat(validation.getErrors()).hasSize(1).containsExactly(ERROR_MESSAGE + " should have a value");
     }
 
     @Test
     void should_validate_a_valid_String() {
-        final Validation validation = Validation.validateNotNullOrEmpty("String", "Specimen");
+        final Validation validation = Validation.validateNotNullOrEmpty("String", ERROR_MESSAGE);
 
         assertThat(validation.hasError()).isFalse();
     }
