@@ -2,10 +2,7 @@ package org.maibornwolff.validation;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.NullSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.*;
 import org.mockito.Mockito;
 
 import java.util.Collection;
@@ -91,6 +88,29 @@ class ValidationTest {
 
         assertThat(validation.hasError()).isFalse();
         Mockito.verify(fun).apply(eq("value 1"));
+    }
+
+    @Test
+    void should_validate_a_null_String() {
+        final Validation validation = Validation.validateNotNullOrEmpty(null, "Specimen");
+
+        assertThat(validation.hasError()).isTrue();
+        assertThat(validation.getErrors()).hasSize(1).containsExactly("Specimen should have a value");
+    }
+
+    @Test
+    void should_validate_an_empty_String() {
+        final Validation validation = Validation.validateNotNullOrEmpty("", "Specimen");
+
+        assertThat(validation.hasError()).isTrue();
+        assertThat(validation.getErrors()).hasSize(1).containsExactly("Specimen should have a value");
+    }
+
+    @Test
+    void should_validate_a_valid_String() {
+        final Validation validation = Validation.validateNotNullOrEmpty("String", "Specimen");
+
+        assertThat(validation.hasError()).isFalse();
     }
 
     @Test
