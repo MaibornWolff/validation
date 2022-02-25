@@ -5,10 +5,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.*;
 import org.mockito.Mockito;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -68,11 +65,31 @@ class ValidationTest {
                 ERROR_MESSAGE);
     }
 
+    @Test
+    void should_validate_a_Collection_that_is_not_empty() {
+        Collection<String> col = Set.of("value 1");
+        final Validation validation = Validation.validateNotEmpty(col, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isFalse();
+    }
+
     @ParameterizedTest
     @NullSource
     @MethodSource("emptyCollections")
     void should_validate_if_a_Collection_is_not_empty(Collection col) {
         final Validation validation = Validation.validateNotEmpty(col, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isTrue();
+        assertThat(validation.getErrors()).hasSize(1).containsExactly(ERROR_MESSAGE);
+    }
+
+    @ParameterizedTest
+    @NullSource
+    @MethodSource("emptyCollections")
+    void should_validate_if_a_Collection_is_not_empty_with_call_on_potential_sub_elements(Collection col) {
+        Function fun = Mockito.mock(Function.class);
+
+        final Validation validation = Validation.validateNotEmpty(col, fun, ERROR_MESSAGE);
 
         assertThat(validation.hasError()).isTrue();
         assertThat(validation.getErrors()).hasSize(1).containsExactly(ERROR_MESSAGE);
@@ -196,9 +213,30 @@ class ValidationTest {
 
         assertThat(validation.hasError()).isTrue();
     }
+    @Test
+    void validateEmptyOrMatches_should_validate_optionals_of_string_without_errors() {
+        final Validation validation = Validation.validateEmptyOrMatches(Optional.of("W123"), "W\\d{3}", "name");
+
+        assertThat(validation.hasError()).isFalse();
+    }
 
     @Test
-    void validateNotNull_should_validate_not_null() {
+    void validateEmptyOrMatches_with_name_parameter_should_validate_optionals_of_string_without_errors() {
+        final Validation validation = Validation.validateEmptyOrMatches("W123", "W\\d{3}", "name");
+
+        assertThat(validation.hasError()).isFalse();
+    }
+
+    @ParameterizedTest
+    @MethodSource("objects")
+    void validateNotNull_should_validate_not_null(Object object) {
+        final Validation validation = Validation.validateNotNull(object,"name");
+
+        assertThat(validation.hasError()).isFalse();
+    }
+
+    @Test
+    void validateNotNull_should_validate_null() {
         final Validation validation = Validation.validateNotNull(null,"name");
 
         assertThat(validation.hasError()).isTrue();
@@ -216,6 +254,13 @@ class ValidationTest {
 
     @Test
     void validateNotEmpty_should_validate_not_empty_Strings() {
+        final Validation validation = validateNotEmpty("value", ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isFalse();
+    }
+
+    @Test
+    void validateNotEmpty_should_validate_empty_Strings() {
         final Validation validation = validateNotEmpty("", ERROR_MESSAGE);
 
         assertThat(validation.hasError()).isTrue();
@@ -270,6 +315,16 @@ class ValidationTest {
         return Stream.of(
                 List.of(),
                 Set.of()
+        );
+    }
+
+    public static Stream<Object> objects() {
+        return Stream.of(
+                new Object(),
+                "string",
+                new Validation(),
+                List.of(1, 2, 3),
+                15.7
         );
     }
 }
