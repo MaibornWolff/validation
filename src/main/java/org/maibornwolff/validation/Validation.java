@@ -36,26 +36,26 @@ public class Validation {
         return validation;
     }
 
-    public static <T> Validation validateNotNull(T checkee, String name) {
-        return Objects.isNull(checkee) ?
+    public static <T> Validation validateNotNull(T specimen, String name) {
+        return Objects.isNull(specimen) ?
                 error(name + " should not be null") :
                 ok();
     }
 
-    public static <T> Validation validateNotNull(T checkee, Function<T, Validation> callable, String message) {
-        return Objects.isNull(checkee) ?
+    public static <T> Validation validateNotNull(T specimen, Function<T, Validation> callable, String message) {
+        return Objects.isNull(specimen) ?
                 error(message) :
-                Validation.of(callable.apply(checkee));
+                Validation.of(callable.apply(specimen));
     }
 
-    public static <T> Validation validateNotEmpty(String checkee, String message) {
-        return Objects.isNull(checkee) || checkee.isEmpty() ?
+    public static <T> Validation validateNotEmpty(String specimen, String message) {
+        return Objects.isNull(specimen) || specimen.isEmpty() ?
                 error(message) :
                 ok();
     }
 
-    public static <T> Validation validateNotEmpty(Collection<T> checkee, String message) {
-        return Objects.isNull(checkee) || checkee.isEmpty() ?
+    public static <T> Validation validateNotEmpty(Collection<T> specimen, String message) {
+        return Objects.isNull(specimen) || specimen.isEmpty() ?
                 error(message) :
                 ok();
     }
@@ -72,38 +72,38 @@ public class Validation {
                 Validation.of(collection.stream().map(callable).collect(toList()));
     }
 
-    public static Validation validateNotNullOrEmpty(String checkee, String name) {
-        return checkee == null || checkee.isEmpty() ?
+    public static Validation validateNotNullOrEmpty(String specimen, String name) {
+        return specimen == null || specimen.isEmpty() ?
                 error(name + " should have a value") :
                 ok();
     }
 
-    public static Validation validateNotNullAndMatches(String checkee, String regex, String name) {
-        return checkee == null || !matches(regex, checkee) ?
+    public static Validation validateNotNullAndMatches(String specimen, String regex, String name) {
+        return specimen == null || !matches(regex, specimen) ?
                 error(name + " should match " + regex) :
                 ok();
     }
 
-    public static Validation validateEmptyOrMatches(String checkee, String regex, String name) {
-        return checkee == null || checkee.isEmpty() || matches(regex, checkee) ?
+    public static Validation validateEmptyOrMatches(String specimen, String regex, String name) {
+        return specimen == null || specimen.isEmpty() || matches(regex, specimen) ?
                 ok() :
                 error(name + " should match " + regex);
     }
 
-    public static Validation validateEmptyOrMatches(Optional<String> checkee, String regex, String name) {
-        return checkee.isEmpty() || matches(regex, checkee.get()) ?
+    public static Validation validateEmptyOrMatches(Optional<String> specimen, String regex, String name) {
+        return specimen.isEmpty() || matches(regex, specimen.get()) ?
                 ok() :
                 error(name + " should match " + regex);
     }
 
-    public static <T> Validation validateIsPresent(Optional<T> checkee, String name) {
-        return validateNotNull(checkee, opt -> opt.isPresent() ?
+    public static <T> Validation validateIsPresent(Optional<T> specimen, String name) {
+        return validateNotNull(specimen, opt -> opt.isPresent() ?
                 ok() :
                 error(name + " should be present"), name + " should not be null");
     }
 
-    public static <T> Validation validateIsPresent(Optional<T> checkee, Function<T, Validation> callable, String name) {
-        return checkee.map(t -> Validation.of(callable.apply(t)))
+    public static <T> Validation validateIsPresent(Optional<T> specimen, Function<T, Validation> callable, String name) {
+        return specimen.map(t -> Validation.of(callable.apply(t)))
                 .orElseGet(() -> error(name + " should be present"));
     }
 
