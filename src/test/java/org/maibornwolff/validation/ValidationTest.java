@@ -2,16 +2,10 @@ package org.maibornwolff.validation;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.NullSource;
-import org.junit.jupiter.params.provider.ValueSource;
+import org.junit.jupiter.params.provider.*;
 import org.mockito.Mockito;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -67,8 +61,16 @@ class ValidationTest {
 
     @Test
     void toString_should_generate_readable_output() {
-        assertThat(Validation.error("A error message").toString()).isEqualTo("Validation errors:\n" +
-                "A error message");
+        assertThat(Validation.error(ERROR_MESSAGE).toString()).isEqualTo("Validation errors:\n" +
+                ERROR_MESSAGE);
+    }
+
+    @Test
+    void should_validate_a_Collection_that_is_not_empty() {
+        Collection<String> col = Set.of("value 1");
+        final Validation validation = Validation.validateNotEmpty(col, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isFalse();
     }
 
     @ParameterizedTest
@@ -81,8 +83,20 @@ class ValidationTest {
         assertThat(validation.getErrors()).hasSize(1).containsExactly(ERROR_MESSAGE);
     }
 
+    @ParameterizedTest
+    @NullSource
+    @MethodSource("emptyCollections")
+    void should_validate_if_a_Collection_is_not_empty_with_call_on_potential_sub_elements(Collection col) {
+        Function fun = Mockito.mock(Function.class);
+
+        final Validation validation = Validation.validateNotEmpty(col, fun, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isTrue();
+        assertThat(validation.getErrors()).hasSize(1).containsExactly(ERROR_MESSAGE);
+    }
+
     @Test
-    void should_validate_if_a_Collection_and_call_the_callable_with_each_sub_element() {
+    void should_validate_if_a_Collection_is_not_empty_and_call_the_callable_with_each_sub_element() {
         Function fun = Mockito.mock(Function.class);
         Mockito.when(fun.apply(any())).thenReturn(Validation.ok());
 
@@ -91,6 +105,51 @@ class ValidationTest {
 
         assertThat(validation.hasError()).isFalse();
         Mockito.verify(fun).apply(eq("value 1"));
+    }
+
+    @Test
+    void should_validate_if_a_Collection_is_null() {
+        Function fun = Mockito.mock(Function.class);
+        Mockito.when(fun.apply(any())).thenReturn(Validation.ok());
+
+        final Validation validation = Validation.validateNotNull((Collection<String>) null, (Function<String, Validation>) fun, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isTrue();
+    }
+
+    @Test
+    void should_validate_if_a_Collection_is_not_null_and_call_the_callable_with_each_sub_element() {
+        Function fun = Mockito.mock(Function.class);
+        Mockito.when(fun.apply(any())).thenReturn(Validation.ok());
+
+        Collection<String> col = Set.of("value 1");
+        final Validation validation = Validation.validateNotNull(col, (Function<String, Validation>) fun, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isFalse();
+        Mockito.verify(fun).apply(eq("value 1"));
+    }
+
+    @Test
+    void should_validate_a_null_String() {
+        final Validation validation = Validation.validateNotNullOrEmpty(null, ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isTrue();
+        assertThat(validation.getErrors()).hasSize(1).containsExactly(ERROR_MESSAGE + " should have a value");
+    }
+
+    @Test
+    void should_validate_an_empty_String() {
+        final Validation validation = Validation.validateNotNullOrEmpty("", ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isTrue();
+        assertThat(validation.getErrors()).hasSize(1).containsExactly(ERROR_MESSAGE + " should have a value");
+    }
+
+    @Test
+    void should_validate_a_valid_String() {
+        final Validation validation = Validation.validateNotNullOrEmpty("String", ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isFalse();
     }
 
     @Test
@@ -154,9 +213,30 @@ class ValidationTest {
 
         assertThat(validation.hasError()).isTrue();
     }
+    @Test
+    void validateEmptyOrMatches_should_validate_optionals_of_string_without_errors() {
+        final Validation validation = Validation.validateEmptyOrMatches(Optional.of("W123"), "W\\d{3}", "name");
+
+        assertThat(validation.hasError()).isFalse();
+    }
 
     @Test
-    void validateNotNull_should_validate_not_null() {
+    void validateEmptyOrMatches_with_name_parameter_should_validate_optionals_of_string_without_errors() {
+        final Validation validation = Validation.validateEmptyOrMatches("W123", "W\\d{3}", "name");
+
+        assertThat(validation.hasError()).isFalse();
+    }
+
+    @ParameterizedTest
+    @MethodSource("objects")
+    void validateNotNull_should_validate_not_null(Object object) {
+        final Validation validation = Validation.validateNotNull(object,"name");
+
+        assertThat(validation.hasError()).isFalse();
+    }
+
+    @Test
+    void validateNotNull_should_validate_null() {
         final Validation validation = Validation.validateNotNull(null,"name");
 
         assertThat(validation.hasError()).isTrue();
@@ -174,6 +254,13 @@ class ValidationTest {
 
     @Test
     void validateNotEmpty_should_validate_not_empty_Strings() {
+        final Validation validation = validateNotEmpty("value", ERROR_MESSAGE);
+
+        assertThat(validation.hasError()).isFalse();
+    }
+
+    @Test
+    void validateNotEmpty_should_validate_empty_Strings() {
         final Validation validation = validateNotEmpty("", ERROR_MESSAGE);
 
         assertThat(validation.hasError()).isTrue();
@@ -228,6 +315,16 @@ class ValidationTest {
         return Stream.of(
                 List.of(),
                 Set.of()
+        );
+    }
+
+    public static Stream<Object> objects() {
+        return Stream.of(
+                new Object(),
+                "string",
+                new Validation(),
+                List.of(1, 2, 3),
+                15.7
         );
     }
 }
